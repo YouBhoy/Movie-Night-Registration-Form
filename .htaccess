@@ -1,0 +1,75 @@
+# Security Headers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' cdn.tailwindcss.com cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' cdn.tailwindcss.com cdnjs.cloudflare.com fonts.googleapis.com; font-src fonts.gstatic.com; img-src 'self' data:; connect-src 'self';"
+</IfModule>
+
+# Hide sensitive files
+<Files "config.php">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files "security.php">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files ".htaccess">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Hide data directory
+<Directory "data">
+    Order allow,deny
+    Deny from all
+</Directory>
+
+# Prevent access to sensitive file types
+<FilesMatch "\.(log|sql|bak|backup|old|tmp)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Prevent directory browsing
+Options -Indexes
+
+# Force HTTPS (uncomment when SSL is active)
+# RewriteEngine On
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Block common attack patterns
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Block SQL injection attempts
+    RewriteCond %{QUERY_STRING} (\<|%3C).*script.*(\>|%3E) [NC,OR]
+    RewriteCond %{QUERY_STRING} GLOBALS(=|\[|\%[0-9A-Z]{0,2}) [OR]
+    RewriteCond %{QUERY_STRING} _REQUEST(=|\[|\%[0-9A-Z]{0,2}) [OR]
+    RewriteCond %{QUERY_STRING} (\||%7C) [OR]
+    RewriteCond %{QUERY_STRING} union.*select [NC,OR]
+    RewriteCond %{QUERY_STRING} concat.*\( [NC]
+    RewriteRule .* - [F,L]
+    
+    # Block file injection attempts
+    RewriteCond %{REQUEST_METHOD} GET
+    RewriteCond %{QUERY_STRING} [a-zA-Z0-9_]=http:// [OR]
+    RewriteCond %{QUERY_STRING} [a-zA-Z0-9_]=(\.\.//?)+ [OR]
+    RewriteCond %{QUERY_STRING} [a-zA-Z0-9_]=/([a-z0-9_.]//?)+ [NC]
+    RewriteRule .* - [F,L]
+</IfModule>
+
+# Rate limiting (basic)
+<IfModule mod_evasive24.c>
+    DOSHashTableSize    2048
+    DOSPageCount        10
+    DOSSiteCount        50
+    DOSPageInterval     1
+    DOSSiteInterval     1
+    DOSBlockingPeriod   600
+</IfModule>

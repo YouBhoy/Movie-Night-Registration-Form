@@ -1,0 +1,10 @@
+# Add these lines to the TOP of your existing .htaccess file
+# This ensures index.html is treated as the default page
+
+DirectoryIndex index.html index.php
+RewriteEngine On
+
+# Redirect root to index.html if no specific file is requested
+RewriteRule ^$ index.html [L]
+
+# Keep all your existing .htaccess content below this line...

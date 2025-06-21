@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Successful - WD Movie Night</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'cinema-brown': '#8b4513',
+                        'cinema-light': '#f4e4bc',
+                        'cinema-gold': '#deb887',
+                        'cinema-dark': '#654321'
+                    },
+                    fontFamily: {
+                        'poppins': ['Poppins', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="font-poppins bg-gradient-to-br from-green-600 via-green-500 to-emerald-400 min-h-screen">
+    
+    <div class="max-w-4xl mx-auto p-5 pt-16">
+        <div class="text-center">
+            <!-- WD Branding -->
+            <div class="flex items-center justify-center gap-4 mb-8">
+                <img src="images/wd-logo.png" alt="Western Digital" class="h-16 w-auto">
+                <div class="text-left">
+                    <h1 class="text-3xl font-bold text-white">WD Movie Night</h1>
+                    <p class="text-green-100 text-sm font-medium">Registration Confirmed</p>
+                </div>
+            </div>
+
+            <!-- Success Icon -->
+            <div class="bg-white/20 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8">
+                <i class="fas fa-check-circle text-5xl text-white"></i>
+            </div>
+
+            <h1 class="text-5xl font-bold text-white mb-4">Registration Successful!</h1>
+            <p class="text-green-100 text-xl mb-8">Thank you for registering for the WD Movie Night</p>
+
+            <!-- What's Next Card -->
+            <div class="bg-white rounded-3xl shadow-2xl overflow-hidden max-w-2xl mx-auto">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-2xl font-semibold text-cinema-brown flex items-center justify-center gap-2">
+                        <i class="fas fa-film"></i> What's Next?
+                    </h2>
+                </div>
+                <div class="p-6 space-y-6">
+                    <div class="bg-blue-50 p-4 rounded-xl">
+                        <h3 class="font-semibold text-blue-900 mb-2">Event Details</h3>
+                        <p class="text-blue-700 text-sm">
+                            You'll receive event details including the movie selection, venue, and timing closer to the date.
+                        </p>
+                    </div>
+
+                    <div class="bg-amber-50 p-4 rounded-xl">
+                        <h3 class="font-semibold text-amber-900 mb-2">Need to Make Changes?</h3>
+                        <p class="text-amber-700 text-sm">
+                            Contact the WD team if you need to update your registration or cancel your attendance.
+                        </p>
+                    </div>
+
+                    <a href="index.html" class="inline-flex items-center gap-2 bg-white text-cinema-brown border-2 border-gray-300 py-3 px-6 rounded-xl font-medium hover:bg-gray-50 hover:border-gray-400 transition-all">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Registration Form
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get registration details from localStorage
+            const registrationData = JSON.parse(localStorage.getItem('registrationData') || '{}');
+            
+            if (registrationData.staff_name) {
+                updateConfirmationDetails(registrationData);
+            }
+        });
+
+        function updateConfirmationDetails(data) {
+            // Update the confirmation message with specific details
+            const successMessage = document.querySelector('.text-xl.mb-8');
+            if (successMessage) {
+                successMessage.innerHTML = `
+                    <strong>Registration Details:</strong><br>
+                    <div class="bg-white/95 rounded-2xl p-6 mt-4 text-left text-cinema-brown max-w-lg mx-auto">
+                        <p class="mb-2"><strong>Name:</strong> ${data.staff_name}</p>
+                        <p class="mb-2"><strong>Attendees:</strong> ${data.number_of_pax} ${data.number_of_pax == 1 ? 'person' : 'people'}</p>
+                        <p class="mb-2"><strong>Selected Seats:</strong> ${data.selected_seats || 'Not selected'}</p>
+                        <p class="mb-2"><strong>Movie:</strong> ${data.movie_title || 'Movie Night'}</p>
+                        <p class="mb-2"><strong>Date & Time:</strong> ${data.event_date || 'TBA'} | ${data.event_time || 'TBA'}</p>
+                        <p class="mb-0"><strong>Venue:</strong> ${data.venue || 'TBA'}</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
