@@ -25,8 +25,8 @@ try {
             'type' => 'string',
             'min_length' => 2,
             'max_length' => 255,
-            'pattern' => '/^[a-zA-Z\s\-\.\']+$/',
-            'pattern_message' => 'Name can only contain letters, spaces, hyphens, dots, and apostrophes'
+            'pattern' => '/^[a-zA-Z0-9\s\-\.\']+$/',
+            'pattern_message' => 'Employee number can only contain letters, numbers, spaces, hyphens, dots, and apostrophes'
         ],
         'number_of_pax' => [
             'required' => true,
@@ -40,10 +40,16 @@ try {
             'pattern' => '/^(normal|crew_c)$/',
             'pattern_message' => 'Invalid shift preference'
         ],
+        'cinema_hall' => [
+            'required' => true,
+            'type' => 'string',
+            'pattern' => '/^(hall_1|hall_2)$/',
+            'pattern_message' => 'Invalid cinema hall selection'
+        ],
         'selected_seats' => [
             'type' => 'string',
             'max_length' => 100,
-            'pattern' => '/^[A-L][0-9]{1,2}(,[A-L][0-9]{1,2})*$/',
+            'pattern' => '/^[A-Z][0-9]{1,2}(,[A-Z][0-9]{1,2})*$/',
             'pattern_message' => 'Invalid seat format'
         ]
     ];
@@ -60,6 +66,7 @@ try {
     $number_of_pax = (int)$_POST['number_of_pax'];
     $selected_seats = SecurityManager::sanitizeInput($_POST['selected_seats'] ?? '');
     $shift_preference = SecurityManager::sanitizeInput($_POST['shift_preference']);
+    $cinema_hall = SecurityManager::sanitizeInput($_POST['cinema_hall']);
 
     // Additional business logic validation
     $seats_array = [];
@@ -111,9 +118,10 @@ try {
                 FROM seats 
                 WHERE CONCAT(row_letter, seat_number) IN ($placeholders) 
                 AND shift_type = ? 
+                AND cinema_hall = ?
                 AND is_occupied = 1
             ");
-            $params = array_merge($seats_array, [$shift_preference]);
+            $params = array_merge($seats_array, [$shift_preference, $cinema_hall]);
             $stmt->execute($params);
             
             if ($stmt->fetch()['occupied_count'] > 0) {
@@ -123,10 +131,10 @@ try {
 
         // Insert registration with prepared statement
         $stmt = $pdo->prepare("
-            INSERT INTO registrations (staff_name, number_of_pax, selected_seats, shift_preference) 
-            VALUES (?, ?, ?, ?)
+            INSERT INTO registrations (staff_name, number_of_pax, selected_seats, shift_preference, cinema_hall) 
+            VALUES (?, ?, ?, ?, ?)
         ");
-        $stmt->execute([$staff_name, $number_of_pax, $selected_seats, $shift_preference]);
+        $stmt->execute([$staff_name, $number_of_pax, $selected_seats, $shift_preference, $cinema_hall]);
         
         $registration_id = $pdo->lastInsertId();
 
@@ -139,9 +147,9 @@ try {
                 $stmt = $pdo->prepare("
                     UPDATE seats 
                     SET is_occupied = 1, registration_id = ? 
-                    WHERE row_letter = ? AND seat_number = ? AND shift_type = ?
+                    WHERE row_letter = ? AND seat_number = ? AND shift_type = ? AND cinema_hall = ?
                 ");
-                $stmt->execute([$registration_id, $row_letter, $seat_number, $shift_preference]);
+                $stmt->execute([$registration_id, $row_letter, $seat_number, $shift_preference, $cinema_hall]);
             }
         }
 
@@ -164,6 +172,7 @@ try {
                 'number_of_pax' => $number_of_pax,
                 'selected_seats' => $selected_seats,
                 'shift_preference' => $shift_preference,
+                'cinema_hall' => $cinema_hall,
                 'movie_title' => $event_settings['movie_title'] ?? 'Movie Night',
                 'event_date' => $event_settings['event_date'] ?? 'TBA',
                 'event_time' => $event_settings['event_time'] ?? 'TBA',

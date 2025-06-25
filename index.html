@@ -109,23 +109,15 @@
             </div>
         </header>
 
-        <!-- Admin Access Link -->
-        <div class="text-center mb-4">
-            <a href="admin-login.php" class="inline-flex items-center gap-2 bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all">
-                <i class="fas fa-cog"></i>
-                Admin Dashboard
-            </a>
-        </div>
-
         <!-- Registration Form Card -->
         <div class="bg-cinema-light rounded-3xl p-8 shadow-2xl mb-8 animate-glow">
             <form id="registrationForm" class="space-y-6">
                 <!-- Staff Name -->
                 <div>
-                    <label for="staff_name" class="block text-lg font-semibold text-cinema-brown mb-2">Name</label>
+                    <label for="staff_name" class="block text-lg font-semibold text-cinema-brown mb-2">Employee Number</label>
                     <input type="text" id="staff_name" name="staff_name" 
                            class="w-full p-4 border-2 border-amber-300 rounded-xl text-lg bg-white/80 focus:bg-white focus:border-cinema-brown focus:ring-4 focus:ring-cinema-brown/20 transition-all duration-300" 
-                           placeholder="Enter your full name" required>
+                           placeholder="Enter your employee number" required>
                 </div>
 
                 <!-- Number of Pax -->
@@ -153,6 +145,17 @@
                     </select>
                 </div>
 
+                <!-- Cinema Hall Selection -->
+                <div>
+                    <label for="cinema_hall" class="block text-lg font-semibold text-cinema-brown mb-2">Cinema Hall</label>
+                    <select id="cinema_hall" name="cinema_hall" 
+                            class="w-full p-4 border-2 border-amber-300 rounded-xl text-lg bg-white/80 focus:bg-white focus:border-cinema-brown focus:ring-4 focus:ring-cinema-brown/20 transition-all duration-300" required>
+                        <option value="">Select cinema hall</option>
+                        <option value="hall_1" id="hall1Option">Cinema Hall 1</option>
+                        <option value="hall_2" id="hall2Option">Cinema Hall 2</option>
+                    </select>
+                </div>
+
                 <!-- Seat Selection -->
                 <div id="seatSelectionGroup" class="hidden">
                     <label class="block text-lg font-semibold text-cinema-brown mb-4">Select Your Seats</label>
@@ -160,7 +163,7 @@
                     <!-- Cinema Layout -->
                     <div class="bg-cinema-brown/10 border-2 border-amber-300 rounded-2xl p-6 mb-4">
                         <div class="text-center mb-4">
-                            <h3 id="venueTitle" class="text-xl font-semibold text-cinema-brown bg-amber-200 px-4 py-2 rounded-lg inline-block">CINEMA HALL 1</h3>
+                            <h3 id="venueTitle" class="text-xl font-semibold text-cinema-brown bg-amber-200 px-4 py-2 rounded-lg inline-block">SELECT CINEMA HALL</h3>
                         </div>
                         
                         <div class="flex gap-8 justify-center mb-8">
@@ -201,7 +204,7 @@
 
                     <!-- Selected Seats Info -->
                     <div class="text-center p-4 bg-cinema-brown/10 border border-amber-300 rounded-xl mb-4">
-                        <strong class="text-cinema-brown">Selected Seats: </strong>
+                        <strong class="text-cinema-brown">Selected Seats: </strong> 
                         <span id="selectedSeatsDisplay" class="text-cinema-brown font-medium">None</span>
                     </div>
                 </div>
@@ -224,6 +227,14 @@
         <footer class="text-center text-amber-200 text-sm">
             <p id="eventDescription">Questions? Contact the WD team for assistance.</p>
         </footer>
+    </div>
+
+    <!-- Admin Access Link - Bottom Right -->
+    <div class="fixed bottom-6 right-6 z-30">
+        <a href="admin-login.php" class="inline-flex items-center gap-2 bg-slate-600 hover:bg-slate-700 text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 text-sm font-medium">
+            <i class="fas fa-cog"></i>
+            <span class="hidden sm:inline">Admin</span>
+        </a>
     </div>
 
     <script src="script.js"></script>

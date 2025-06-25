@@ -28,7 +28,7 @@ try {
 // Get all registrations
 try {
     $stmt = $pdo->query("
-        SELECT id, staff_name, number_of_pax, selected_seats, shift_preference, created_at 
+        SELECT id, staff_name, number_of_pax, selected_seats, shift_preference, cinema_hall, created_at 
         FROM registrations 
         ORDER BY created_at DESC
     ");
@@ -38,13 +38,15 @@ try {
     $stats_stmt = $pdo->query("
         SELECT 
             COUNT(*) as total_registrations, 
-            SUM(number_of_pax) as total_attendees 
+            SUM(number_of_pax) as total_attendees,
+            COUNT(CASE WHEN cinema_hall = 'hall_1' THEN 1 END) as hall_1_registrations,
+            COUNT(CASE WHEN cinema_hall = 'hall_2' THEN 1 END) as hall_2_registrations
         FROM registrations
     ");
     $stats = $stats_stmt->fetch(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     $registrations = [];
-    $stats = ['total_registrations' => 0, 'total_attendees' => 0];
+    $stats = ['total_registrations' => 0, 'total_attendees' => 0, 'hall_1_registrations' => 0, 'hall_2_registrations' => 0];
     error_log("Database error: " . $e->getMessage());
 }
 ?>
@@ -106,16 +108,168 @@ try {
             </div>
         </header>
 
-        <!-- Event Settings Card -->
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-cinema-light/95 p-6 rounded-2xl shadow-lg">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-amber-700 font-medium">Total Registrations</span>
+                    <i class="fas fa-user-check text-amber-600"></i>
+                </div>
+                <div class="text-3xl font-bold text-cinema-brown"><?php echo $stats['total_registrations']; ?></div>
+            </div>
+
+            <div class="bg-cinema-light/95 p-6 rounded-2xl shadow-lg">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-amber-700 font-medium">Total Attendees</span>
+                    <i class="fas fa-users text-amber-600"></i>
+                </div>
+                <div class="text-3xl font-bold text-cinema-brown"><?php echo $stats['total_attendees']; ?></div>
+            </div>
+
+            <div class="bg-blue-100 p-6 rounded-2xl shadow-lg">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-blue-700 font-medium">Cinema Hall 1</span>
+                    <i class="fas fa-film text-blue-600"></i>
+                </div>
+                <div class="text-3xl font-bold text-blue-800"><?php echo $stats['hall_1_registrations']; ?></div>
+            </div>
+
+            <div class="bg-purple-100 p-6 rounded-2xl shadow-lg">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-purple-700 font-medium">Cinema Hall 2</span>
+                    <i class="fas fa-film text-purple-600"></i>
+                </div>
+                <div class="text-3xl font-bold text-purple-800"><?php echo $stats['hall_2_registrations']; ?></div>
+            </div>
+        </div>
+
+        <!-- Event Settings Cards - Separated by Hall -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Cinema Hall 1 Settings -->
+            <div class="bg-blue-50 rounded-2xl shadow-xl overflow-hidden border-2 border-blue-200">
+                <div class="bg-blue-600 p-6 text-white">
+                    <h2 class="text-2xl font-semibold flex items-center gap-2">
+                        <i class="fas fa-film"></i> Cinema Hall 1 Settings
+                    </h2>
+                    <p class="text-blue-100">Configure settings for Cinema Hall 1</p>
+                </div>
+                <div class="p-6">
+                    <form id="hall1SettingsForm" class="space-y-4">
+                        <input type="hidden" name="hall" value="hall_1">
+                        
+                        <div>
+                            <label class="block text-sm font-semibold text-blue-800 mb-2">Hall 1 Name</label>
+                            <input type="text" name="hall_1_name" 
+                                   value="<?php echo htmlspecialchars($settings['hall_1_name'] ?? 'Cinema Hall 1'); ?>" 
+                                   class="w-full p-3 border-2 border-blue-300 rounded-lg bg-white focus:border-blue-600 transition-all">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-blue-800 mb-2">Number of Rows (A-?)</label>
+                            <select name="hall_1_rows" class="w-full p-3 border-2 border-blue-300 rounded-lg bg-white focus:border-blue-600 transition-all">
+                                <?php 
+                                $currentRows = $settings['hall_1_rows'] ?? 'L';
+                                for ($i = ord('A'); $i <= ord('Z'); $i++) {
+                                    $letter = chr($i);
+                                    $selected = ($letter === $currentRows) ? 'selected' : '';
+                                    echo "<option value='$letter' $selected>A to $letter (" . ($i - ord('A') + 1) . " rows)</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-blue-800 mb-2">Normal Shift Seats</label>
+                                <input type="text" name="hall_1_normal_seats" 
+                                       value="<?php echo htmlspecialchars($settings['hall_1_normal_seats'] ?? '1-6'); ?>" 
+                                       placeholder="e.g., 1-6"
+                                       class="w-full p-3 border-2 border-blue-300 rounded-lg bg-white focus:border-blue-600 transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-blue-800 mb-2">Crew Shift Seats</label>
+                                <input type="text" name="hall_1_crew_seats" 
+                                       value="<?php echo htmlspecialchars($settings['hall_1_crew_seats'] ?? '7-11'); ?>" 
+                                       placeholder="e.g., 7-11"
+                                       class="w-full p-3 border-2 border-blue-300 rounded-lg bg-white focus:border-blue-600 transition-all">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-semibold transition-all">
+                            <i class="fas fa-save mr-2"></i>Update Hall 1 Settings
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Cinema Hall 2 Settings -->
+            <div class="bg-purple-50 rounded-2xl shadow-xl overflow-hidden border-2 border-purple-200">
+                <div class="bg-purple-600 p-6 text-white">
+                    <h2 class="text-2xl font-semibold flex items-center gap-2">
+                        <i class="fas fa-film"></i> Cinema Hall 2 Settings
+                    </h2>
+                    <p class="text-purple-100">Configure settings for Cinema Hall 2</p>
+                </div>
+                <div class="p-6">
+                    <form id="hall2SettingsForm" class="space-y-4">
+                        <input type="hidden" name="hall" value="hall_2">
+                        
+                        <div>
+                            <label class="block text-sm font-semibold text-purple-800 mb-2">Hall 2 Name</label>
+                            <input type="text" name="hall_2_name" 
+                                   value="<?php echo htmlspecialchars($settings['hall_2_name'] ?? 'Cinema Hall 2'); ?>" 
+                                   class="w-full p-3 border-2 border-purple-300 rounded-lg bg-white focus:border-purple-600 transition-all">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-purple-800 mb-2">Number of Rows (A-?)</label>
+                            <select name="hall_2_rows" class="w-full p-3 border-2 border-purple-300 rounded-lg bg-white focus:border-purple-600 transition-all">
+                                <?php 
+                                $currentRows = $settings['hall_2_rows'] ?? 'L';
+                                for ($i = ord('A'); $i <= ord('Z'); $i++) {
+                                    $letter = chr($i);
+                                    $selected = ($letter === $currentRows) ? 'selected' : '';
+                                    echo "<option value='$letter' $selected>A to $letter (" . ($i - ord('A') + 1) . " rows)</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-purple-800 mb-2">Normal Shift Seats</label>
+                                <input type="text" name="hall_2_normal_seats" 
+                                       value="<?php echo htmlspecialchars($settings['hall_2_normal_seats'] ?? '1-6'); ?>" 
+                                       placeholder="e.g., 1-6"
+                                       class="w-full p-3 border-2 border-purple-300 rounded-lg bg-white focus:border-purple-600 transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-purple-800 mb-2">Crew Shift Seats</label>
+                                <input type="text" name="hall_2_crew_seats" 
+                                       value="<?php echo htmlspecialchars($settings['hall_2_crew_seats'] ?? '7-11'); ?>" 
+                                       placeholder="e.g., 7-11"
+                                       class="w-full p-3 border-2 border-purple-300 rounded-lg bg-white focus:border-purple-600 transition-all">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 px-6 rounded-lg font-semibold transition-all">
+                            <i class="fas fa-save mr-2"></i>Update Hall 2 Settings
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- General Event Settings -->
         <div class="bg-cinema-light/95 rounded-2xl shadow-xl mb-8 overflow-hidden">
             <div class="p-6 border-b border-amber-200">
                 <h2 class="text-2xl font-semibold text-cinema-brown flex items-center gap-2">
-                    <i class="fas fa-cog"></i> Event Settings
+                    <i class="fas fa-cog"></i> General Event Settings
                 </h2>
-                <p class="text-amber-700">Configure your movie night event details</p>
+                <p class="text-amber-700">Configure general movie night event details</p>
             </div>
             <div class="p-6">
-                <form id="settingsForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <form id="generalSettingsForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label for="event_title" class="block text-sm font-semibold text-cinema-brown mb-2">Event Title</label>
                         <input type="text" id="event_title" name="event_title" 
@@ -147,14 +301,6 @@ try {
                     </div>
 
                     <div>
-                        <label for="venue" class="block text-sm font-semibold text-cinema-brown mb-2">Venue</label>
-                        <input type="text" id="venue" name="venue" 
-                               value="<?php echo htmlspecialchars($settings['venue'] ?? ''); ?>" 
-                               placeholder="e.g., Cinema Hall 1"
-                               class="w-full p-3 border-2 border-amber-300 rounded-lg bg-white/80 focus:bg-white focus:border-cinema-brown transition-all">
-                    </div>
-
-                    <div>
                         <label for="max_attendees_per_registration" class="block text-sm font-semibold text-cinema-brown mb-2">Max Attendees per Registration</label>
                         <select id="max_attendees_per_registration" name="max_attendees_per_registration"
                                 class="w-full p-3 border-2 border-amber-300 rounded-lg bg-white/80 focus:bg-white focus:border-cinema-brown transition-all">
@@ -166,64 +312,19 @@ try {
                     </div>
 
                     <div>
-                        <label for="normal_shift_label" class="block text-sm font-semibold text-cinema-brown mb-2">Normal Shift Label</label>
-                        <input type="text" id="normal_shift_label" name="normal_shift_label" 
-                               value="<?php echo htmlspecialchars($settings['normal_shift_label'] ?? ''); ?>" 
-                               placeholder="e.g., Normal Shift"
-                               class="w-full p-3 border-2 border-amber-300 rounded-lg bg-white/80 focus:bg-white focus:border-cinema-brown transition-all">
-                    </div>
-
-                    <div>
-                        <label for="crew_shift_label" class="block text-sm font-semibold text-cinema-brown mb-2">Crew Shift Label</label>
-                        <input type="text" id="crew_shift_label" name="crew_shift_label" 
-                               value="<?php echo htmlspecialchars($settings['crew_shift_label'] ?? ''); ?>" 
-                               placeholder="e.g., Crew C - Day Shift"
-                               class="w-full p-3 border-2 border-amber-300 rounded-lg bg-white/80 focus:bg-white focus:border-cinema-brown transition-all">
-                    </div>
-
-                    <div class="md:col-span-2">
-                        <label for="event_description" class="block text-sm font-semibold text-cinema-brown mb-2">Event Description</label>
-                        <textarea id="event_description" name="event_description" rows="3" 
-                                  placeholder="Brief description of the event"
-                                  class="w-full p-3 border-2 border-amber-300 rounded-lg bg-white/80 focus:bg-white focus:border-cinema-brown transition-all"><?php echo htmlspecialchars($settings['event_description'] ?? ''); ?></textarea>
+                        <label class="block text-sm font-semibold text-cinema-brown mb-2">Export Data</label>
+                        <button type="button" onclick="exportToCSV()" class="w-full bg-gradient-to-r from-cinema-gold to-amber-400 text-cinema-brown py-3 px-4 rounded-lg font-semibold hover:from-amber-400 hover:to-cinema-gold transition-all">
+                            <i class="fas fa-download mr-2"></i>Download CSV
+                        </button>
                     </div>
 
                     <div class="md:col-span-2">
                         <button type="submit" class="bg-gradient-to-r from-cinema-gold to-amber-400 text-cinema-brown py-3 px-6 rounded-lg font-semibold hover:from-amber-400 hover:to-cinema-gold transition-all flex items-center gap-2">
                             <i class="fas fa-save"></i>
-                            Update Settings
+                            Update General Settings
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
-
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-cinema-light/95 p-6 rounded-2xl shadow-lg">
-                <div class="flex justify-between items-center mb-4">
-                    <span class="text-amber-700 font-medium">Total Registrations</span>
-                    <i class="fas fa-user-check text-amber-600"></i>
-                </div>
-                <div class="text-3xl font-bold text-cinema-brown"><?php echo $stats['total_registrations']; ?></div>
-            </div>
-
-            <div class="bg-cinema-light/95 p-6 rounded-2xl shadow-lg">
-                <div class="flex justify-between items-center mb-4">
-                    <span class="text-amber-700 font-medium">Total Attendees</span>
-                    <i class="fas fa-users text-amber-600"></i>
-                </div>
-                <div class="text-3xl font-bold text-cinema-brown"><?php echo $stats['total_attendees']; ?></div>
-            </div>
-
-            <div class="bg-cinema-light/95 p-6 rounded-2xl shadow-lg">
-                <div class="flex justify-between items-center mb-4">
-                    <span class="text-amber-700 font-medium">Export Data</span>
-                    <i class="fas fa-download text-amber-600"></i>
-                </div>
-                <button onclick="exportToCSV()" class="bg-gradient-to-r from-cinema-gold to-amber-400 text-cinema-brown py-2 px-4 rounded-lg font-semibold text-sm hover:from-amber-400 hover:to-cinema-gold transition-all">
-                    Download CSV
-                </button>
             </div>
         </div>
 
@@ -238,7 +339,7 @@ try {
                     
                     <!-- Search Box -->
                     <div class="relative max-w-xs">
-                        <input type="text" id="searchInput" placeholder="Search by staff name..." 
+                        <input type="text" id="searchInput" placeholder="Search by employee number..." 
                                class="w-full pl-4 pr-10 py-2 border-2 border-amber-300 rounded-lg text-sm bg-white/80 focus:bg-white focus:border-cinema-brown transition-all">
                         <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-amber-600"></i>
                     </div>
@@ -255,11 +356,11 @@ try {
                     <table id="registrationsTable" class="w-full">
                         <thead class="bg-cinema-gold/20">
                             <tr>
-                                <th class="text-left py-4 px-6 font-semibold text-cinema-brown">Staff Name</th>
+                                <th class="text-left py-4 px-6 font-semibold text-cinema-brown">Employee Number</th>
                                 <th class="text-left py-4 px-6 font-semibold text-cinema-brown">Attendees</th>
+                                <th class="text-left py-4 px-6 font-semibold text-cinema-brown">Cinema Hall</th>
                                 <th class="text-left py-4 px-6 font-semibold text-cinema-brown">Shift</th>
                                 <th class="text-left py-4 px-6 font-semibold text-cinema-brown">Selected Seats</th>
-                                <th class="text-left py-4 px-6 font-semibold text-cinema-brown">Movie Details</th>
                                 <th class="text-left py-4 px-6 font-semibold text-cinema-brown">Registration Date</th>
                                 <th class="text-center py-4 px-6 font-semibold text-cinema-brown">Actions</th>
                             </tr>
@@ -275,21 +376,22 @@ try {
                                         </span>
                                     </td>
                                     <td class="py-4 px-6">
-                                        <span class="px-3 py-1 rounded-full text-sm font-medium <?php echo $registration['shift_preference'] == 'normal' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'; ?>">
+                                        <span class="px-3 py-1 rounded-full text-sm font-medium <?php echo $registration['cinema_hall'] == 'hall_1' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'; ?>">
+                                            <?php 
+                                            $hallName = $registration['cinema_hall'] == 'hall_1' ? 
+                                                ($settings['hall_1_name'] ?? 'Cinema Hall 1') : 
+                                                ($settings['hall_2_name'] ?? 'Cinema Hall 2');
+                                            echo htmlspecialchars($hallName);
+                                            ?>
+                                        </span>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <span class="px-3 py-1 rounded-full text-sm font-medium <?php echo $registration['shift_preference'] == 'normal' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'; ?>">
                                             <?php echo ucfirst(str_replace('_', ' ', $registration['shift_preference'])); ?>
                                         </span>
                                     </td>
                                     <td class="py-4 px-6 font-mono text-sm text-cinema-brown font-semibold">
                                         <?php echo $registration['selected_seats'] ? htmlspecialchars($registration['selected_seats']) : 'Not selected'; ?>
-                                    </td>
-                                    <td class="py-4 px-6 min-w-48">
-                                        <div class="text-sm">
-                                            <div class="font-semibold text-cinema-brown"><?php echo htmlspecialchars($settings['movie_title'] ?? 'Movie Night'); ?></div>
-                                            <div class="text-amber-700 text-xs mt-1">
-                                                <?php echo htmlspecialchars($settings['event_date'] ?? 'TBA'); ?> | <?php echo htmlspecialchars($settings['event_time'] ?? 'TBA'); ?>
-                                            </div>
-                                            <div class="text-amber-700 text-xs"><?php echo htmlspecialchars($settings['venue'] ?? 'TBA'); ?></div>
-                                        </div>
                                     </td>
                                     <td class="py-4 px-6 text-amber-700 text-sm">
                                         <?php echo date('M j, Y g:i A', strtotime($registration['created_at'])); ?>

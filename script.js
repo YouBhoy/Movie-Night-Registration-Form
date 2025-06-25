@@ -4,6 +4,7 @@ let maxSeats = 0
 let currentShift = ""
 let seatData = {}
 let eventSettings = {}
+let currentHall = ""
 
 // Security functions
 function sanitizeInput(input) {
@@ -101,7 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
       selectedSeats = []
       updateSelectedSeatsDisplay()
 
-      if (maxSeats > 0 && currentShift) {
+      if (maxSeats > 0 && currentShift && currentHall) {
         console.log("Showing seat selection")
         seatSelectionGroup.classList.remove("hidden")
         renderSeats()
@@ -117,8 +118,8 @@ document.addEventListener("DOMContentLoaded", () => {
       selectedSeats = []
       updateSelectedSeatsDisplay()
 
-      if (maxSeats > 0 && currentShift) {
-        console.log("Showing seat selection for shift:", currentShift)
+      if (maxSeats > 0 && currentShift && currentHall) {
+        console.log("Showing seat selection for shift:", currentShift, "hall:", currentHall)
         seatSelectionGroup.classList.remove("hidden")
         if (Object.keys(seatData).length === 0) {
           loadSeatData().then(() => {
@@ -127,6 +128,27 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
           renderSeats()
         }
+      } else {
+        seatSelectionGroup.classList.add("hidden")
+      }
+    })
+  }
+
+  // Handle cinema hall change
+  const hallSelect = document.getElementById("cinema_hall")
+  if (hallSelect) {
+    hallSelect.addEventListener("change", function () {
+      console.log("Hall changed to:", this.value)
+      currentHall = this.value
+      selectedSeats = []
+      updateSelectedSeatsDisplay()
+
+      if (maxSeats > 0 && currentShift && currentHall) {
+        console.log("Showing seat selection for hall:", currentHall)
+        seatSelectionGroup.classList.remove("hidden")
+        loadSeatData().then(() => {
+          renderSeats()
+        })
       } else {
         seatSelectionGroup.classList.add("hidden")
       }
@@ -162,6 +184,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
 
+      // Add cinema hall validation in form submission
+      if (!currentHall) {
+        showError("Please select a cinema hall")
+        return
+      }
+
       // Show loading state
       submitBtn.disabled = true
       submitText.style.display = "none"
@@ -171,6 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         const formData = new FormData(form)
         formData.set("selected_seats", selectedSeats.join(","))
+        formData.set("cinema_hall", currentHall)
 
         const response = await fetch("register.php", {
           method: "POST",
@@ -302,8 +331,12 @@ function updatePageContent() {
 
   // Update venue title
   const venueTitle = document.getElementById("venueTitle")
-  if (venueTitle) {
-    venueTitle.textContent = (eventSettings.venue || "CINEMA HALL 1").toUpperCase()
+  if (venueTitle && currentHall) {
+    const hallNames = {
+      hall_1: "CINEMA HALL 1",
+      hall_2: "CINEMA HALL 2",
+    }
+    venueTitle.textContent = hallNames[currentHall] || "SELECT CINEMA HALL"
   }
 
   // Update shift headers
